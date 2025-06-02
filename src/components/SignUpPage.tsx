@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,14 +11,82 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabaseClient";
+import { useToast } from "@/components/ui/use-toast";
 
 const SignUpPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle sign up logic here
-    console.log("Sign up submitted");
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.from("admin").insert([
+        {
+          fullname: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+        },
+      ]);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success!",
+        description: "Your account has been created successfully",
+      });
+
+      // Reset form
+      setFormData({
+        fullName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+
+      // Redirect to login page after successful signup
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description:
+          error.message || "Failed to create account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -54,6 +122,8 @@ const SignUpPage = () => {
                     type="text"
                     placeholder="Enter your full name"
                     className="h-12 text-base"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
@@ -66,6 +136,8 @@ const SignUpPage = () => {
                     type="email"
                     placeholder="Enter your email"
                     className="h-12 text-base"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
@@ -78,6 +150,8 @@ const SignUpPage = () => {
                     type="password"
                     placeholder="Enter your password"
                     className="h-12 text-base"
+                    value={formData.password}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
@@ -90,14 +164,17 @@ const SignUpPage = () => {
                     type="password"
                     placeholder="Confirm your password"
                     className="h-12 text-base"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
                 <Button
                   type="submit"
                   className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isLoading}
                 >
-                  Sign Up
+                  {isLoading ? "Creating Account..." : "Sign Up"}
                 </Button>
               </form>
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,16 +12,68 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabaseClient";
+import { useToast } from "@/components/ui/use-toast";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login submitted");
-    // Redirect to Admin Dashboard
-    navigate("/admin-dashboard");
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("admin")
+        .select("*")
+        .eq("email", formData.email)
+        .eq("password", formData.password)
+        .single();
+
+      if (error || !data) {
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Store user email in localStorage for settings display
+      localStorage.setItem("currentUserEmail", data.email);
+
+      toast({
+        title: "Login Successful!",
+        description: `Welcome back, ${data.fullname}!`,
+      });
+
+      // Redirect to Admin Dashboard
+      setTimeout(() => {
+        navigate("/admin-dashboard");
+      }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "An error occurred during login. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,6 +118,8 @@ const LoginPage = () => {
                     type="email"
                     placeholder="Enter your email"
                     className="h-12 text-base"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
@@ -78,14 +132,17 @@ const LoginPage = () => {
                     type="password"
                     placeholder="Enter your password"
                     className="h-12 text-base"
+                    value={formData.password}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
                 <Button
                   type="submit"
                   className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isLoading}
                 >
-                  Sign In
+                  {isLoading ? "Signing In..." : "Sign In"}
                 </Button>
               </form>
 
