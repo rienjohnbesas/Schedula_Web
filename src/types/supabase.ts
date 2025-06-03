@@ -19,7 +19,7 @@ export type Database = {
           password: string
           role: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -30,7 +30,7 @@ export type Database = {
           password: string
           role?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -41,7 +41,7 @@ export type Database = {
           password?: string
           role?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -89,6 +89,7 @@ export type Database = {
           email: string
           fullname: string
           id: string
+          password: string
           updated_at: string
         }
         Insert: {
@@ -96,6 +97,7 @@ export type Database = {
           email: string
           fullname: string
           id?: string
+          password: string
           updated_at?: string
         }
         Update: {
@@ -103,6 +105,7 @@ export type Database = {
           email?: string
           fullname?: string
           id?: string
+          password?: string
           updated_at?: string
         }
         Relationships: []

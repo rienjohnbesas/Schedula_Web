@@ -53,6 +53,9 @@ const SignUpPage = () => {
           fullname: formData.fullName,
           email: formData.email,
           password: formData.password,
+          role: "admin",
+          is_active: true,
+          updated_at: new Date().toISOString(),
         },
       ]);
 
